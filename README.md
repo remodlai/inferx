@@ -2,7 +2,7 @@
 ## InferX: AI Lambda-Like Inference Function as a Service with 2-Second Cold Starts & 90% GPU Utilization
 InferX is an advanced serverless inference platform engineered for ultra-fast, efficient, and scalable deployment of AI models. It enables serving multiple models within a single environment, achieving cold start times of less than two seconds. Please explore its capabilities further at https://inferx.net.
 
-https://github.com/inferx-net/inferx/wiki/InferX-platform-0.1.0-deployment is the deployment document.
+https://github.com/inferx-net/inferx/wiki/InferX-platform-v0.1.5-beta10-deployment is the deployment document for the current release. The historical 0.1.0 guide remains available on the wiki for reference.
 
 With InferX, you can:
 
