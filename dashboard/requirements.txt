@@ -34,3 +34,9 @@ gunicorn==23.0.0
 gevent==24.2.1
 Authlib==1.3.2
 pytz==2024.2
+Flask-Session
+SQLAlchemy
+psycopg2-binary
+Flask-Session
+SQLAlchemy
+Flask-SQLAlchemy

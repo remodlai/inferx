@@ -45,6 +45,8 @@ import sys
 import multiprocessing
 
 from werkzeug.middleware.proxy_fix import ProxyFix
+from flask_session import Session
+from sqlalchemy import create_engine
 
 
 # logger = logging.getLogger('gunicorn.error')
@@ -52,6 +54,21 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", "supersecret")
+
+# Configure server-side sessions using PostgreSQL
+SESSION_DB = os.environ.get(
+    'SESSION_DB_URI',
+    'postgresql://secret:123456@inferx-secrets-db.cbcmgsyoow1t.us-west-2.rds.amazonaws.com:5432/secretdb'
+)
+app.config['SQLALCHEMY_DATABASE_URI'] = SESSION_DB
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SESSION_TYPE'] = 'sqlalchemy'
+app.config['SESSION_SQLALCHEMY'] = create_engine(SESSION_DB)
+app.config['SESSION_PERMANENT'] = False
+app.config['SESSION_USE_SIGNER'] = True
+app.config['SESSION_KEY_PREFIX'] = 'inferx:'
+
+Session(app)
 
 #Create a Blueprint with a common prefix
 prefix_bp = Blueprint('prefix', __name__, url_prefix='/demo')
@@ -102,30 +119,29 @@ apihostaddr = os.getenv('INFERX_APIGW_ADDR', "http://localhost:4000")
 
 def is_token_expired():
     # Check if token exists and has expiration time
-    if 'token' not in session:
+    if 'expires_at' not in session:
         return True
-    
-    token = session['token']
-    return token.get('expires_at', 0) < time.time()
+
+    return session.get('expires_at', 0) < time.time()
 
 def refresh_token_if_needed():
-    if 'token' not in session:
+    if 'refresh_token' not in session:
         return False
-    
-    token = session['token']
+
     if is_token_expired():
         try:
             new_token = keycloak.fetch_access_token(
-                refresh_token=token['refresh_token'],
+                refresh_token=session['refresh_token'],
                 grant_type='refresh_token'
             )
-            session['token'] = new_token
             session['access_token'] = new_token['access_token']
+            session['refresh_token'] = new_token.get('refresh_token')
+            session['expires_at'] = new_token.get('expires_at')
             return True
         except Exception as e:
             # Handle refresh error (e.g., invalid refresh token)
             print(f"Token refresh failed: {e}")
-            session.pop('token', None)
+            session.pop('refresh_token', None)
             return False
     return True
 
@@ -138,7 +154,7 @@ def not_require_login(func):
 
         current_path = request.url
         redirect_uri = url_for('prefix.login', redirectpath=current_path, _external=True)
-        if 'token' not in session:
+        if 'access_token' not in session:
             return redirect(redirect_uri)
         if is_token_expired() and not refresh_token_if_needed():
             return redirect(redirect_uri)
@@ -151,7 +167,7 @@ def require_login(func):
     def wrapper(*args, **kwargs):
         current_path = request.url
         redirect_uri = url_for('prefix.login', redirectpath=current_path, _external=True)
-        if 'token' not in session:
+        if 'access_token' not in session:
             return redirect(redirect_uri)
         if is_token_expired() and not refresh_token_if_needed():
             return redirect(redirect_uri)
@@ -186,11 +202,12 @@ def auth_callback():
         session['user'] = userinfo
         session['username'] = userinfo.get('preferred_username')
         session['access_token'] = token.get('access_token')
-        session['token'] = token
-        session['id_token'] = token.get('id_token')
+        session['refresh_token'] = token.get('refresh_token')
+        session['expires_at'] = token.get('expires_at')
+        # Don't store full token object or id_token - too large for cookie
 
         if redirectpath=='':
-            return redirect(url_for('prefix.listfunc'))
+            return redirect(url_for('prefix.ListFunc'))
         return redirect(redirectpath)
     except Exception as e:
         return f"Authentication failed: {str(e)}", 403
@@ -202,19 +219,13 @@ def logout():
         f"{KEYCLOAK_URL}/realms/{KEYCLOAK_REALM_NAME}/protocol/openid-connect/logout"
     )
     
-    id_token = session.get('id_token', '')
-    # return redirect(end_session_endpoint)
-
+    # id_token not stored to save session space
     session.clear()
-    # # Redirect to Keycloak to clear SSO session
-    return redirect(
-        f"{end_session_endpoint}?"
-        f"post_logout_redirect_uri={url_for('prefix.listfunc', _external=True)}&"
-        f"id_token_hint={id_token}"
-    )
+    # Just redirect to function list after logout
+    return redirect(url_for('prefix.ListFunc'))
 
 def getapikeys():
-    access_token = session.get('token')['access_token']
+    access_token = session.get('access_token')
     # Include the access token in the Authorization header
     headers = {'Authorization': f'Bearer {access_token}'}
     
@@ -291,9 +302,13 @@ def listfuncs(tenant: str, namespace: str):
         headers = {'Authorization': f'Bearer {access_token}'}
     url = "{}/functions/{}/{}/".format(apihostaddr, tenant, namespace)
     resp = requests.get(url, headers=headers)
-    funcs = json.loads(resp.content)  
-
-    return funcs
+    if resp.status_code == 404 or not resp.content:
+        return []  # No functions found
+    try:
+        funcs = json.loads(resp.content)
+        return funcs
+    except json.JSONDecodeError:
+        return []  # Invalid JSON, return empty list
 
 
 def getfunc(tenant: str, namespace: str, funcname: str):
