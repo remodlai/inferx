@@ -1,0 +1,30 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: inferx-cluster
+  region: us-west-2
+
+managedNodeGroups:
+  - name: gpu-worker-l40s
+    instanceType: g6.2xlarge  # 1x L40S 48GB, 8 vCPU, 32GB RAM
+    desiredCapacity: 1
+    minSize: 1
+    maxSize: 1
+    volumeSize: 200  # GB EBS for OS
+    volumeType: gp3
+    labels:
+      role: gpu-worker
+      inferx_storage: data
+      inferx_nodeType: inferx_file
+      nvidia.com/gpu: "true"
+    tags:
+      Name: inferx-gpu-worker-l40s
+    taints:
+      - key: nvidia.com/gpu
+        value: "true"
+        effect: NoSchedule
+    iam:
+      withAddonPolicies:
+        cloudWatch: true
+        ebs: true
