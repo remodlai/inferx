@@ -1,0 +1,79 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: inferx-cluster
+  region: us-west-2
+  version: "1.31"
+
+# VPC Configuration
+vpc:
+  cidr: 10.0.0.0/16
+  nat:
+    gateway: Single  # One NAT gateway (cost savings for testing)
+
+# IAM Configuration
+iam:
+  withOIDC: true
+
+# Node Groups
+managedNodeGroups:
+  # Control plane nodes - runs InferX services (Gateway, Scheduler, etcd, etc.)
+  - name: control-plane
+    instanceType: m5.2xlarge
+    desiredCapacity: 2
+    minSize: 2
+    maxSize: 2
+    volumeSize: 100  # GB EBS for OS
+    volumeType: gp3
+    labels:
+      role: control-plane
+      inferx_nodeType: control
+    tags:
+      Name: inferx-control-plane
+    iam:
+      withAddonPolicies:
+        cloudWatch: true
+        ebs: true
+        efs: true
+
+  # GPU worker node - dual H100 for model serving
+  - name: gpu-worker
+    instanceType: p5.4xlarge  # 2x H100 80GB, 48 vCPU, 384GB RAM
+    desiredCapacity: 1
+    minSize: 1
+    maxSize: 1
+    volumeSize: 200  # GB EBS for OS
+    volumeType: gp3
+    labels:
+      role: gpu-worker
+      inferx_storage: data
+      inferx_nodeType: inferx_file
+      nvidia.com/gpu: "true"
+    tags:
+      Name: inferx-gpu-worker
+    taints:
+      - key: nvidia.com/gpu
+        value: "true"
+        effect: NoSchedule
+    iam:
+      withAddonPolicies:
+        cloudWatch: true
+        ebs: true
+
+# EKS Addons
+addons:
+  - name: vpc-cni
+    version: latest
+  - name: coredns
+    version: latest
+  - name: kube-proxy
+    version: latest
+
+# CloudWatch Logging
+cloudWatch:
+  clusterLogging:
+    enableTypes:
+      - api
+      - audit
+      - authenticator
