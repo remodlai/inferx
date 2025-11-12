@@ -117,6 +117,15 @@ tls = False
 
 apihostaddr = os.getenv('INFERX_APIGW_ADDR', "http://localhost:4000")
 
+def safe_json_loads(response):
+    """Safely parse JSON response, return empty list/dict on error"""
+    if response.status_code == 404 or not response.content:
+        return []
+    try:
+        return json.loads(response.content)
+    except (json.JSONDecodeError, ValueError):
+        return []
+
 def is_token_expired():
     # Check if token exists and has expiration time
     if 'expires_at' not in session:
@@ -231,7 +240,7 @@ def getapikeys():
     
     url = "{}/apikey/".format(apihostaddr)
     resp = requests.get(url, headers=headers)
-    apikeys = json.loads(resp.content)
+    apikeys = safe_json_loads(resp)
 
     return apikeys
 
@@ -305,7 +314,7 @@ def listfuncs(tenant: str, namespace: str):
     if resp.status_code == 404 or not resp.content:
         return []  # No functions found
     try:
-        funcs = json.loads(resp.content)
+        funcs = safe_json_loads(resp)
         return funcs
     except json.JSONDecodeError:
         return []  # Invalid JSON, return empty list
