@@ -18,6 +18,7 @@ steps:
       - cargo --version
 
       - echo "Building svc binary (release mode)..."
+      - export PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1
       - cargo build --release --bin svc
 
       - echo "Building ixctl binary..."
