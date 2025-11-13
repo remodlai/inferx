@@ -59,8 +59,6 @@ steps:
       - docker-login#v3.0.0:
           username: brianremodl
           password-env: DOCKERHUB_TOKEN
-    secrets:
-      - DOCKERHUB_TOKEN
 
   - label: "Build Dashboard Image"
     key: build-dashboard
@@ -93,8 +91,6 @@ steps:
       - docker-login#v3.0.0:
           username: brianremodl
           password-env: DOCKERHUB_TOKEN
-    secrets:
-      - DOCKERHUB_TOKEN
 
   - label: "Build PostgreSQL Image"
     key: build-postgres
@@ -128,8 +124,6 @@ steps:
       - docker-login#v3.0.0:
           username: brianremodl
           password-env: DOCKERHUB_TOKEN
-    secrets:
-      - DOCKERHUB_TOKEN
 
   - wait
 
@@ -144,3 +138,6 @@ steps:
       echo "  - remodlai/inferx_postgres:${VERSION}"
       echo ""
       echo "To deploy on EKS, update the image tags in k8s manifests to ${VERSION}"
+
+secrets:
+  - DOCKERHUB_TOKEN
