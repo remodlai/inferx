@@ -2,7 +2,7 @@ env:
   VERSION: "${BUILDKITE_BRANCH}"
 
 steps:
-  - label: ":rust: Build InferX Platform & NA Images"
+  - label: "Build InferX Platform & NA Images"
     key: build-platform-na
     agents:
       queue: cpu_queue_postmerge
@@ -59,7 +59,7 @@ steps:
           volumes:
             - /var/run/docker.sock:/var/run/docker.sock
 
-  - label ":dashboard: Build Dashboard Image"
+  - label: "Build Dashboard Image"
     key: build-dashboard
     agents:
       queue: cpu_queue_postmerge
@@ -91,7 +91,7 @@ steps:
           volumes:
             - /var/run/docker.sock:/var/run/docker.sock
 
-  - label ":postgres: Build PostgreSQL Image"
+  - label: "Build PostgreSQL Image"
     key: build-postgres
     agents:
       queue: cpu_queue_postmerge
@@ -126,7 +126,7 @@ steps:
 
   - wait
 
-  - label ":white_check_mark: Build Complete"
+  - label: "Build Complete"
     command: |
       echo "✅ All InferX images built successfully for version ${VERSION}!"
       echo ""
