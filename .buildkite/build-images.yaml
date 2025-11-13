@@ -2,7 +2,7 @@ env:
   VERSION: "${BUILDKITE_BRANCH}"
 
 steps:
-  - label: "Build InferX Platform & NA Images"
+  - label: "Build InferX Platform & NA Images "
     key: build-platform-na
     agents:
       queue: cpu_queue_postmerge
