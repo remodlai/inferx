@@ -434,9 +434,7 @@ async fn PostPrompt(
     });
 
     let stream = tokio_stream::wrappers::ReceiverStream::new(rx);
-    let body = http_body_util::StreamBody::new(stream);
-
-    let body = axum::body::Body::from_stream(body);
+    let body = axum::body::Body::from_stream(stream);
 
     let mut response = Response::new(body);
     for (key, value) in kvs {
@@ -568,9 +566,7 @@ async fn DirectFuncCallProc(gw: &HttpGateway, mut req: Request) -> Result<Respon
     });
 
     let stream = tokio_stream::wrappers::ReceiverStream::new(rx);
-    let body = http_body_util::StreamBody::new(stream);
-
-    let body = axum::body::Body::from_stream(body);
+    let body = axum::body::Body::from_stream(stream);
 
     let mut resp = Response::new(body);
 
@@ -989,9 +985,7 @@ async fn FuncCall(
     });
 
     let stream = tokio_stream::wrappers::ReceiverStream::new(rx);
-    let body = http_body_util::StreamBody::new(stream);
-
-    let body = axum::body::Body::from_stream(body);
+    let body = axum::body::Body::from_stream(stream);
 
     let mut resp = Response::new(body);
 

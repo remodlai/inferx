@@ -72,6 +72,10 @@ steps:
       queue: cpu_queue_postmerge
     commands:
       - echo "Building InferX Dashboard v${VERSION}"
+      - echo "Installing Docker CLI..."
+      - |
+          apt-get update -qq
+          apt-get install -y -qq docker.io
       - mkdir -p ./target/dashboard
       - rm -rf ./target/dashboard/*
       - cp -rL ./dashboard/* ./target/dashboard/
@@ -103,6 +107,10 @@ steps:
       queue: cpu_queue_postmerge
     commands:
       - echo "Building InferX PostgreSQL v${VERSION}"
+      - echo "Installing Docker CLI..."
+      - |
+          apt-get update -qq
+          apt-get install -y -qq docker.io
       - mkdir -p ./target/postgres
       - rm -rf ./target/postgres/*
       - cp ./dashboard/sql/*.sql ./target/postgres/
