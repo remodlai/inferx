@@ -14,7 +14,7 @@ steps:
 
       - echo "Installing Rust..."
       - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
-      - . $HOME/.cargo/env
+      - . /usr/local/cargo/env
       - rustc --version
 
       - echo "Building svc binary (release mode)..."
