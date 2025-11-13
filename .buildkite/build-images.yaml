@@ -72,6 +72,8 @@ steps:
       queue: cpu_queue_postmerge
     commands:
       - echo "Building InferX Dashboard v${VERSION}"
+      - echo "Logging into Docker Hub..."
+      - docker login -u brianremodl -p "${DOCKERHUB_TOKEN}"
       - echo "Installing Docker CLI..."
       - |
           apt-get update -qq
@@ -107,6 +109,8 @@ steps:
       queue: cpu_queue_postmerge
     commands:
       - echo "Building InferX PostgreSQL v${VERSION}"
+      - echo "Logging into Docker Hub..."
+      - docker login -u brianremodl -p "${DOCKERHUB_TOKEN}"
       - echo "Installing Docker CLI..."
       - |
           apt-get update -qq
