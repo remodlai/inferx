@@ -1,8 +1,5 @@
 env:
   VERSION: "${BUILDKITE_BRANCH}"
-  DEBIAN_FRONTEND: noninteractive
-  TZ: Etc/UTC
-  PYO3_PYTHON: python3.12
 
 steps:
   - label: "Build InferX Platform & NA Images"
@@ -50,6 +47,15 @@ steps:
 
       - echo "✅ Platform and NA images built!"
     plugins:
+      - docker#v5.11.0:
+          image: ubuntu:22.04
+          environment:
+            - DEBIAN_FRONTEND=noninteractive
+            - TZ=Etc/UTC
+            - PYO3_PYTHON=python3.12
+          mount-buildkite-agent: true
+          volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
       - docker-login#v3.0.0:
           username: brianremodl
           password-env: DOCKERHUB_TOKEN
@@ -75,6 +81,15 @@ steps:
 
       - echo "✅ Dashboard image built and pushed!"
     plugins:
+      - docker#v5.11.0:
+          image: ubuntu:22.04
+          environment:
+            - DEBIAN_FRONTEND=noninteractive
+            - TZ=Etc/UTC
+            - PYO3_PYTHON=python3.12
+          mount-buildkite-agent: true
+          volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
       - docker-login#v3.0.0:
           username: brianremodl
           password-env: DOCKERHUB_TOKEN
@@ -101,6 +116,15 @@ steps:
 
       - echo "✅ PostgreSQL image built and pushed!"
     plugins:
+      - docker#v5.11.0:
+          image: ubuntu:22.04
+          environment:
+            - DEBIAN_FRONTEND=noninteractive
+            - TZ=Etc/UTC
+            - PYO3_PYTHON=python3.12
+          mount-buildkite-agent: true
+          volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
       - docker-login#v3.0.0:
           username: brianremodl
           password-env: DOCKERHUB_TOKEN
