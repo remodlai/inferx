@@ -40,7 +40,7 @@ steps:
       - docker tag remodlai/inferx_platform:${VERSION} remodlai/inferx_na:${VERSION}
 
       - echo "Logging in to Docker Hub..."
-      - echo "$$(buildkite-agent secret get DOCKERHUB_TOKEN)" | docker login -u brianremodl --password-stdin
+      - echo "$$DOCKERHUB_TOKEN" | docker login -u brianremodl --password-stdin
 
       - echo "Pushing platform image..."
       - docker push remodlai/inferx_platform:${VERSION}
@@ -56,6 +56,8 @@ steps:
           image: rust:1.75-slim
           propagate-environment: true
           mount-buildkite-agent: true
+          environment:
+            - DOCKERHUB_TOKEN
           volumes:
             - /var/run/docker.sock:/var/run/docker.sock
 
@@ -65,9 +67,6 @@ steps:
       queue: cpu_queue_postmerge
     commands:
       - echo "Building InferX Dashboard v${VERSION}"
-      - echo "Installing Docker CLI..."
-      - apt-get update -qq && apt-get install -y -qq docker.io
-
       - mkdir -p ./target/dashboard
       - rm -rf ./target/dashboard/*
       - cp -rL ./dashboard/* ./target/dashboard/
@@ -86,13 +85,6 @@ steps:
       - echo "✅ Dashboard image built and pushed!"
     secrets:
       - DOCKERHUB_TOKEN
-    plugins:
-      - docker#v5.11.0:
-          image: ubuntu:22.04
-          propagate-environment: true
-          mount-buildkite-agent: true
-          volumes:
-            - /var/run/docker.sock:/var/run/docker.sock
 
   - label: "Build PostgreSQL Image"
     key: build-postgres
@@ -100,9 +92,6 @@ steps:
       queue: cpu_queue_postmerge
     commands:
       - echo "Building InferX PostgreSQL v${VERSION}"
-      - echo "Installing Docker CLI..."
-      - apt-get update -qq && apt-get install -y -qq docker.io
-
       - mkdir -p ./target/postgres
       - rm -rf ./target/postgres/*
       - cp ./dashboard/sql/*.sql ./target/postgres/
@@ -122,13 +111,6 @@ steps:
       - echo "✅ PostgreSQL image built and pushed!"
     secrets:
       - DOCKERHUB_TOKEN
-    plugins:
-      - docker#v5.11.0:
-          image: ubuntu:22.04
-          propagate-environment: true
-          mount-buildkite-agent: true
-          volumes:
-            - /var/run/docker.sock:/var/run/docker.sock
 
   - wait
 
