@@ -9,7 +9,7 @@ steps:
     commands:
       - echo "Building InferX v${VERSION}"
       - echo "Installing build dependencies..."
-      - apt-get update -qq && apt-get install -y -qq build-essential pkg-config libssl-dev protobuf-compiler curl
+      - apt-get update -qq && apt-get install -y -qq build-essential pkg-config libssl-dev protobuf-compiler curl python3.12 python3.12-dev
 
       - echo "Installing Rust..."
       - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
@@ -17,6 +17,7 @@ steps:
       - rustc --version
 
       - echo "Building svc binary..."
+      - export PYO3_PYTHON=python3.12
       - cargo +stable build --bin svc
 
       - echo "Building ixctl binary..."
