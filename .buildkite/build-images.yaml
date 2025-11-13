@@ -8,59 +8,40 @@ steps:
       queue: cpu_queue_postmerge
     commands:
       - echo "Building InferX v${VERSION}"
-      - echo "Installing system dependencies..."
-      - apt-get update -qq
-      - apt-get install -y -qq build-essential pkg-config libssl-dev protobuf-compiler docker.io
-
-      - echo "Switching to Rust nightly..."
-      - rustup default nightly
+      - echo "Installing Rust..."
+      - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+      - . $$HOME/.cargo/env
       - rustc --version
-      - cargo --version
 
-      - echo "Building svc binary (release mode)..."
-      - export PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1
-      - cargo build --release --bin svc
+      - echo "Building svc binary..."
+      - cargo +stable build --bin svc
 
       - echo "Building ixctl binary..."
-      - cargo build --release --bin ixctl
+      - OPENSSL_STATIC=1 cargo +stable build --bin ixctl
 
-      - echo "Preparing Docker build context for platform..."
+      - echo "Preparing Docker build context..."
       - mkdir -p ./target/svc/inferx/config
-      - cp ./target/release/svc ./target/svc/
-      - cp ./target/release/ixctl ./target/svc/
+      - cp ./target/debug/svc ./target/svc/
       - cp ./deployment/svc.Dockerfile ./target/svc/Dockerfile
-      - cp nodeconfig/node*.json ./target/svc/inferx/config/ || echo "No node config files"
+      - cp nodeconfig/node*.json ./target/svc/inferx/config/ || echo "No node config"
       - cp ./deployment/svc-entrypoint.sh ./target/svc/svc-entrypoint.sh
       - cp onenode_logging_config.yaml ./target/svc/ || echo "No logging config"
 
-      - echo "Building platform Docker image..."
+      - echo "Building Docker image..."
       - cd ./target/svc
-      - docker build --network=host --build-arg UBUNTU_VERSION=22.04 -t remodlai/inferx_platform:${VERSION} .
-
-      - echo "Tagging as inferx_na (same image, different name)..."
+      - docker build --build-arg UBUNTU_VERSION=22.04 -t remodlai/inferx_platform:${VERSION} .
       - docker tag remodlai/inferx_platform:${VERSION} remodlai/inferx_na:${VERSION}
 
       - echo "Logging in to Docker Hub..."
-      - echo "$$DOCKERHUB_TOKEN" | docker login -u brianremodl --password-stdin
+      - echo "$$(buildkite-agent secret get DOCKERHUB_TOKEN)" | docker login -u brianremodl --password-stdin
 
-      - echo "Pushing platform image..."
+      - echo "Pushing images..."
       - docker push remodlai/inferx_platform:${VERSION}
-
-      - echo "Pushing NA image..."
       - docker push remodlai/inferx_na:${VERSION}
 
-      - echo "✅ Platform and NA images built and pushed!"
+      - echo "✅ Platform and NA images built!"
     secrets:
       - DOCKERHUB_TOKEN
-    plugins:
-      - docker#v5.11.0:
-          image: rust:latest
-          propagate-environment: true
-          mount-buildkite-agent: true
-          environment:
-            - DOCKERHUB_TOKEN
-          volumes:
-            - /var/run/docker.sock:/var/run/docker.sock
 
   - label: "Build Dashboard Image"
     key: build-dashboard
