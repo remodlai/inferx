@@ -87,4 +87,3 @@ features = ["spin_no_std"]
 
 [build-dependencies]
 tonic-build = { version = "0.8" , features = ["prost"]}
-

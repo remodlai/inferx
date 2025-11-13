@@ -198,6 +198,7 @@ impl HttpGateway {
             let addr = SocketAddr::from(([0, 0, 0, 0], GATEWAY_CONFIG.gatewayPort));
             println!("listening on tls {}", &addr);
             axum_server::bind_rustls(addr, config)
+                .http1_only(true)
                 .serve(app.into_make_service())
                 .await
                 .unwrap();
