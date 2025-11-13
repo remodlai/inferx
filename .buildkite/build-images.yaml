@@ -38,25 +38,23 @@ steps:
       - docker build --build-arg UBUNTU_VERSION=22.04 -t remodlai/inferx_platform:${VERSION} .
       - docker tag remodlai/inferx_platform:${VERSION} remodlai/inferx_na:${VERSION}
 
-      - echo "Logging in to Docker Hub..."
-      - echo "$$DOCKERHUB_TOKEN" | docker login -u brianremodl --password-stdin
-
       - echo "Pushing images..."
       - docker push remodlai/inferx_platform:${VERSION}
       - docker push remodlai/inferx_na:${VERSION}
 
       - echo "✅ Platform and NA images built!"
-    secrets:
-      - DOCKERHUB_TOKEN
     plugins:
       - docker#v5.11.0:
           image: ubuntu:22.04
           propagate-environment: true
           mount-buildkite-agent: true
-          environment:
-            - DOCKERHUB_TOKEN
           volumes:
             - /var/run/docker.sock:/var/run/docker.sock
+      - docker-login#v3.0.0:
+          username: brianremodl
+          password-env: DOCKERHUB_TOKEN
+    secrets:
+      - DOCKERHUB_TOKEN
 
   - label: "Build Dashboard Image"
     key: build-dashboard
@@ -73,13 +71,14 @@ steps:
       - cd ./target/dashboard
       - docker build -t remodlai/inferx_dashboard:${VERSION} .
 
-      - echo "Logging in to Docker Hub..."
-      - echo "$$(buildkite-agent secret get DOCKERHUB_TOKEN)" | docker login -u brianremodl --password-stdin
-
       - echo "Pushing image..."
       - docker push remodlai/inferx_dashboard:${VERSION}
 
       - echo "✅ Dashboard image built and pushed!"
+    plugins:
+      - docker-login#v3.0.0:
+          username: brianremodl
+          password-env: DOCKERHUB_TOKEN
     secrets:
       - DOCKERHUB_TOKEN
 
@@ -99,13 +98,14 @@ steps:
       - cd ./target/postgres
       - docker build -t remodlai/inferx_postgres:${VERSION} .
 
-      - echo "Logging in to Docker Hub..."
-      - echo "$$(buildkite-agent secret get DOCKERHUB_TOKEN)" | docker login -u brianremodl --password-stdin
-
       - echo "Pushing image..."
       - docker push remodlai/inferx_postgres:${VERSION}
 
       - echo "✅ PostgreSQL image built and pushed!"
+    plugins:
+      - docker-login#v3.0.0:
+          username: brianremodl
+          password-env: DOCKERHUB_TOKEN
     secrets:
       - DOCKERHUB_TOKEN
 
