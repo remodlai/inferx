@@ -10,15 +10,11 @@ steps:
       - echo "Building InferX v${VERSION}"
       - echo "Installing system dependencies..."
       - apt-get update -qq
-      - apt-get install -y -qq build-essential pkg-config libssl-dev protobuf-compiler curl docker.io
+      - apt-get install -y -qq build-essential pkg-config libssl-dev protobuf-compiler docker.io
 
-      - echo "Installing Rust..."
-      - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
-      - . /usr/local/cargo/env
+      - echo "Using Rust from base image..."
       - rustc --version
-
-      - echo "Updating dependencies..."
-      - cargo update
+      - cargo --version
 
       - echo "Building svc binary (release mode)..."
       - cargo build --release --bin svc
