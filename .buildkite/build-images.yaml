@@ -12,7 +12,8 @@ steps:
       - apt-get update -qq
       - apt-get install -y -qq build-essential pkg-config libssl-dev protobuf-compiler docker.io
 
-      - echo "Using Rust from base image..."
+      - echo "Switching to Rust nightly..."
+      - rustup default nightly
       - rustc --version
       - cargo --version
 
@@ -52,7 +53,7 @@ steps:
       - DOCKERHUB_TOKEN
     plugins:
       - docker#v5.11.0:
-          image: rust:nightly
+          image: rust:latest
           propagate-environment: true
           mount-buildkite-agent: true
           environment:
