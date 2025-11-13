@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: inferx-dashboard
-          image: inferx/inferx_dashboard:${VERSION}
+          image: remodlai/inferx_dashboard:pr-34
           imagePullPolicy: IfNotPresent
           env:
             - name: KEYCLOAK_URL

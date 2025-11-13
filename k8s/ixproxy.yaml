@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: ixproxy
-          image: inferx/inferx_na:${VERSION}
+          image: remodlai/inferx_na:pr-34
           imagePullPolicy: IfNotPresent
           livenessProbe:          # <-- Kubernetes keepalive check
             httpGet:

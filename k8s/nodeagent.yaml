@@ -17,7 +17,7 @@ spec:
         inferx_nodeType: inferx_blob      
       containers:
         - name: nodeagent
-          image: inferx/inferx_na:${VERSION}
+          image: remodlai/inferx_na:pr-34
           imagePullPolicy: IfNotPresent
           securityContext:
             privileged: true
@@ -158,7 +158,7 @@ spec:
       #       ]
       containers:
         - name: nodeagent
-          image: inferx/inferx_na:${VERSION}
+          image: remodlai/inferx_na:pr-34
           imagePullPolicy: IfNotPresent
           securityContext:
             privileged: true

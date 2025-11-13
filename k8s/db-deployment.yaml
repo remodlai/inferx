@@ -27,7 +27,7 @@ spec:
         inferx_storage: data      
       containers:
         - name: postgres
-          image: inferx/inferx_postgres:${VERSION}
+          image: remodlai/inferx_postgres:pr-34
           imagePullPolicy: IfNotPresent
           env:
             - name: POSTGRES_USER
