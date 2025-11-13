@@ -1,5 +1,8 @@
 env:
   VERSION: "${BUILDKITE_BRANCH}"
+  DEBIAN_FRONTEND: noninteractive
+  TZ: Etc/UTC
+  PYO3_PYTHON: python3.12
 
 steps:
   - label: "Build InferX Platform & NA Images"
@@ -9,17 +12,18 @@ steps:
     commands:
       - echo "Building InferX v${VERSION}"
       - echo "Installing build dependencies..."
-      - apt-get update -qq && apt-get install -y -qq software-properties-common
-      - add-apt-repository ppa:deadsnakes/ppa -y
-      - apt-get update -qq && apt-get install -y -qq build-essential pkg-config libssl-dev protobuf-compiler curl python3.12 python3.12-dev
-
+      - sudo -E apt-get update -qq
+      - sudo -E apt-get install -y -qq software-properties-common tzdata
+      - sudo -E add-apt-repository ppa:deadsnakes/ppa -y
+      - sudo -E apt-get update -qq
+      - sudo -E apt-get install -y -qq build-essential pkg-config libssl-dev protobuf-compiler curl python3.12 python3.12-dev python3.12-venv docker.io
+      - sudo ln -fs /usr/share/zoneinfo/${TZ} /etc/localtime && sudo dpkg-reconfigure -f noninteractive tzdata >/dev/null
       - echo "Installing Rust..."
       - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
       - . $$HOME/.cargo/env
       - rustc --version
 
       - echo "Building svc binary..."
-      - export PYO3_PYTHON=python3.12
       - cargo +stable build --bin svc
 
       - echo "Building ixctl binary..."
@@ -37,19 +41,12 @@ steps:
       - cd ./target/svc
       - docker build --build-arg UBUNTU_VERSION=22.04 -t remodlai/inferx_platform:${VERSION} .
       - docker tag remodlai/inferx_platform:${VERSION} remodlai/inferx_na:${VERSION}
-
       - echo "Pushing images..."
       - docker push remodlai/inferx_platform:${VERSION}
       - docker push remodlai/inferx_na:${VERSION}
 
       - echo "✅ Platform and NA images built!"
     plugins:
-      - docker#v5.11.0:
-          image: ubuntu:22.04
-          propagate-environment: true
-          mount-buildkite-agent: true
-          volumes:
-            - /var/run/docker.sock:/var/run/docker.sock
       - docker-login#v3.0.0:
           username: brianremodl
           password-env: DOCKERHUB_TOKEN
@@ -70,7 +67,6 @@ steps:
       - echo "Building Docker image..."
       - cd ./target/dashboard
       - docker build -t remodlai/inferx_dashboard:${VERSION} .
-
       - echo "Pushing image..."
       - docker push remodlai/inferx_dashboard:${VERSION}
 
@@ -97,7 +93,6 @@ steps:
       - echo "Building Docker image..."
       - cd ./target/postgres
       - docker build -t remodlai/inferx_postgres:${VERSION} .
-
       - echo "Pushing image..."
       - docker push remodlai/inferx_postgres:${VERSION}
 
