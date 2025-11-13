@@ -1,0 +1,61 @@
+{
+    "type": "function",
+    "tenant": "test",
+    "namespace": "public",
+    "name": "Llama-3.2-3B-Instruct",
+    "object": {
+        "spec": {
+            "image": "vllm/vllm-openai:v0.9.0",
+            "commands": [
+                "--model",
+                "meta-llama/Llama-3.2-3B-Instruct",
+                "--disable-custom-all-reduce",
+                "--trust-remote-code",
+                "--max-model-len",
+                "2000"
+            ],
+            "resources": {
+                "CPU": 6000,
+                "Mem": 20000,
+                "GPU": {
+                    "Type": "Any",
+                    "Count": 1,
+                    "vRam": 12000
+                }
+            },
+            "envs": [
+                [
+                    "LD_LIBRARY_PATH",
+                    "/usr/local/lib/python3.12/dist-packages/nvidia/cuda_nvrtc/lib/:$LD_LIBRARY_PATH"
+                ]
+            ],
+            "mounts": [
+                {
+                    "hostpath": "/opt/inferx/cache",
+                    "mountpath": "/root/.cache/huggingface"
+                }
+            ],
+            "endpoint": {
+                "port": 8000,
+                "schema": "Http",
+                "probe": "/health"
+            },
+            "sample_query": {
+                "apiType": "text2text",
+                "prompt": "def print_hello_world():",
+                "path": "v1/completions",
+                "body": {
+                    "model": "meta-llama/Llama-3.2-3B-Instruct",
+                    "max_tokens": "120",
+                    "temperature": "0",
+                    "stream": "true"
+                }
+            },
+            "standby": {
+                "gpu": "File",
+                "pageable": "File",
+                "pinned": "Mem"
+            }
+        }
+    }
+}

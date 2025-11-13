@@ -12,12 +12,15 @@ steps:
     commands:
       - echo "Building InferX v${VERSION}"
       - echo "Installing build dependencies..."
-      - sudo -E apt-get update -qq
-      - sudo -E apt-get install -y -qq software-properties-common tzdata
-      - sudo -E add-apt-repository ppa:deadsnakes/ppa -y
-      - sudo -E apt-get update -qq
-      - sudo -E apt-get install -y -qq build-essential pkg-config libssl-dev protobuf-compiler curl python3.12 python3.12-dev python3.12-venv docker.io
-      - sudo ln -fs /usr/share/zoneinfo/${TZ} /etc/localtime && sudo dpkg-reconfigure -f noninteractive tzdata >/dev/null
+      - |
+          set -euo pipefail
+          apt-get update -qq
+          apt-get install -y -qq software-properties-common tzdata
+          add-apt-repository ppa:deadsnakes/ppa -y
+          apt-get update -qq
+          apt-get install -y -qq build-essential pkg-config libssl-dev protobuf-compiler curl python3.12 python3.12-dev python3.12-venv docker.io
+          ln -fs /usr/share/zoneinfo/${TZ} /etc/localtime
+          dpkg-reconfigure -f noninteractive tzdata >/dev/null
       - echo "Installing Rust..."
       - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
       - . $$HOME/.cargo/env

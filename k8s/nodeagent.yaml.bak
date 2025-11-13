@@ -109,14 +109,14 @@ spec:
           hostPath:
             path: /opt/inferx/bin
         - name: opt-inferx-cache
-          persistentVolumeClaim:
-            claimName: inferx-cache-efs
+          hostPath:
+            path: /opt/inferx/cache
         - name: opt-inferx-data
           hostPath:
             path: /opt/inferx/data
         - name: opt-inferx-snapshot
-          persistentVolumeClaim:
-            claimName: inferx-snapshots-efs
+          hostPath:
+            path: /opt/inferx/snapshot
         - name: docker-runtime
           hostPath:
             path: /var/run/docker/runtime-runc/moby/
@@ -271,14 +271,14 @@ spec:
           hostPath:
             path: /opt/inferx/bin
         - name: opt-inferx-cache
-          persistentVolumeClaim:
-            claimName: inferx-cache-efs
+          hostPath:
+            path: /opt/inferx/cache
         - name: opt-inferx-data
           hostPath:
             path: /opt/inferx/data
         - name: opt-inferx-snapshot
-          persistentVolumeClaim:
-            claimName: inferx-snapshots-efs
+          hostPath:
+            path: /opt/inferx/snapshot
         - name: docker-runtime
           hostPath:
             path: /var/run/docker/runtime-runc/moby/
