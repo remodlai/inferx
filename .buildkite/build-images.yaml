@@ -17,6 +17,14 @@ steps:
           apt-get install -y -qq build-essential pkg-config libssl-dev protobuf-compiler curl python3.12 python3.12-dev python3.12-venv docker.io
           ln -fs /usr/share/zoneinfo/Etc/UTC /etc/localtime
           dpkg-reconfigure -f noninteractive tzdata >/dev/null
+      - echo "Pinning python to 3.12..."
+      - |
+          update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1
+          update-alternatives --set python3 /usr/bin/python3.12
+          update-alternatives --install /usr/bin/python python /usr/bin/python3.12 1
+          update-alternatives --set python /usr/bin/python3.12
+          python3 --version
+          python --version
       - echo "Installing Rust..."
       - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
       - . $$HOME/.cargo/env
@@ -37,8 +45,7 @@ steps:
       - cp onenode_logging_config.yaml ./target/svc/ || echo "No logging config"
 
       - echo "Building Docker image..."
-      - cd ./target/svc
-      - docker build --build-arg UBUNTU_VERSION=22.04 -t remodlai/inferx_platform:${VERSION} .
+      - docker build --build-arg UBUNTU_VERSION=22.04 -f ./target/svc/Dockerfile -t remodlai/inferx_platform:${VERSION} ./target/svc
       - docker tag remodlai/inferx_platform:${VERSION} remodlai/inferx_na:${VERSION}
       - echo "Pushing images..."
       - docker push remodlai/inferx_platform:${VERSION}
@@ -71,8 +78,7 @@ steps:
       - cp ./deployment/dashboard.Dockerfile ./target/dashboard/Dockerfile
 
       - echo "Building Docker image..."
-      - cd ./target/dashboard
-      - docker build -t remodlai/inferx_dashboard:${VERSION} .
+      - docker build -f ./target/dashboard/Dockerfile -t remodlai/inferx_dashboard:${VERSION} ./target/dashboard
       - echo "Pushing image..."
       - docker push remodlai/inferx_dashboard:${VERSION}
 
@@ -104,8 +110,7 @@ steps:
       - cp ./deployment/postgres.Dockerfile ./target/postgres/Dockerfile
 
       - echo "Building Docker image..."
-      - cd ./target/postgres
-      - docker build -t remodlai/inferx_postgres:${VERSION} .
+      - docker build -f ./target/postgres/Dockerfile -t remodlai/inferx_postgres:${VERSION} ./target/postgres
       - echo "Pushing image..."
       - docker push remodlai/inferx_postgres:${VERSION}
 
