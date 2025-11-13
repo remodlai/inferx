@@ -77,6 +77,8 @@ steps:
       - |
           apt-get update -qq
           apt-get install -y -qq docker.io
+      - echo "Fetching Docker Hub token..."
+      - export DOCKERHUB_TOKEN="$(buildkite-agent secret get DOCKERHUB_TOKEN)"
       - echo "Logging into Docker Hub..."
       - docker login -u brianremodl -p "${DOCKERHUB_TOKEN}"
       - mkdir -p ./target/dashboard
@@ -115,6 +117,8 @@ steps:
       - |
           apt-get update -qq
           apt-get install -y -qq docker.io
+      - echo "Fetching Docker Hub token..."
+      - export DOCKERHUB_TOKEN="$(buildkite-agent secret get DOCKERHUB_TOKEN)"
       - echo "Logging into Docker Hub..."
       - docker login -u brianremodl -p "${DOCKERHUB_TOKEN}"
       - mkdir -p ./target/postgres
