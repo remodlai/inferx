@@ -14,7 +14,7 @@ steps:
 
       - echo "Installing Rust..."
       - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
-      - source $HOME/.cargo/env
+      - . $HOME/.cargo/env
       - rustc --version
 
       - echo "Building svc binary (release mode)..."
@@ -111,7 +111,7 @@ steps:
 
       - echo "Building Docker image..."
       - cd ./target/postgres
-      - docker build --network=host -t remodlai/inferx_postgres:${VERSION} .
+      - docker build -t remodlai/inferx_postgres:${VERSION} .
 
       - echo "Logging in to Docker Hub..."
       - echo "$$(buildkite-agent secret get DOCKERHUB_TOKEN)" | docker login -u brianremodl --password-stdin
