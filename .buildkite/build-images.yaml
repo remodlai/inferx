@@ -40,7 +40,7 @@ steps:
       - docker tag remodlai/inferx_platform:${VERSION} remodlai/inferx_na:${VERSION}
 
       - echo "Logging in to Docker Hub..."
-      - echo "$$(buildkite-agent secret get DOCKER_PASSWORD)" | docker login -u brianremodl --password-stdin
+      - echo "$$(buildkite-agent secret get DOCKERHUB_TOKEN)" | docker login -u brianremodl --password-stdin
 
       - echo "Pushing platform image..."
       - docker push remodlai/inferx_platform:${VERSION}
@@ -50,7 +50,7 @@ steps:
 
       - echo "✅ Platform and NA images built and pushed!"
     secrets:
-      - DOCKER_PASSWORD
+      - DOCKERHUB_TOKEN
     plugins:
       - docker#v5.11.0:
           image: rust:1.75-slim
@@ -75,14 +75,14 @@ steps:
       - docker build -t remodlai/inferx_dashboard:${VERSION} .
 
       - echo "Logging in to Docker Hub..."
-      - echo "$$(buildkite-agent secret get DOCKER_PASSWORD)" | docker login -u brianremodl --password-stdin
+      - echo "$$(buildkite-agent secret get DOCKERHUB_TOKEN)" | docker login -u brianremodl --password-stdin
 
       - echo "Pushing image..."
       - docker push remodlai/inferx_dashboard:${VERSION}
 
       - echo "✅ Dashboard image built and pushed!"
     secrets:
-      - DOCKER_PASSWORD
+      - DOCKERHUB_TOKEN
     plugins:
       - docker#v5.11.0:
           image: ubuntu:22.04
@@ -108,14 +108,14 @@ steps:
       - docker build --network=host -t remodlai/inferx_postgres:${VERSION} .
 
       - echo "Logging in to Docker Hub..."
-      - echo "$$(buildkite-agent secret get DOCKER_PASSWORD)" | docker login -u brianremodl --password-stdin
+      - echo "$$(buildkite-agent secret get DOCKERHUB_TOKEN)" | docker login -u brianremodl --password-stdin
 
       - echo "Pushing image..."
       - docker push remodlai/inferx_postgres:${VERSION}
 
       - echo "✅ PostgreSQL image built and pushed!"
     secrets:
-      - DOCKER_PASSWORD
+      - DOCKERHUB_TOKEN
     plugins:
       - docker#v5.11.0:
           image: ubuntu:22.04
