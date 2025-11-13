@@ -17,6 +17,9 @@ steps:
       - . /usr/local/cargo/env
       - rustc --version
 
+      - echo "Updating dependencies..."
+      - cargo update
+
       - echo "Building svc binary (release mode)..."
       - cargo build --release --bin svc
 
