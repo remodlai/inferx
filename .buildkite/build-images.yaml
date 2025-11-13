@@ -59,6 +59,7 @@ steps:
             - DEBIAN_FRONTEND=noninteractive
             - TZ=Etc/UTC
             - PYO3_PYTHON=python3.12
+            - DOCKERHUB_TOKEN
           mount-buildkite-agent: true
           volumes:
             - /var/run/docker.sock:/var/run/docker.sock
@@ -72,12 +73,12 @@ steps:
       queue: cpu_queue_postmerge
     commands:
       - echo "Building InferX Dashboard v${VERSION}"
-      - echo "Logging into Docker Hub..."
-      - docker login -u brianremodl -p "${DOCKERHUB_TOKEN}"
       - echo "Installing Docker CLI..."
       - |
           apt-get update -qq
           apt-get install -y -qq docker.io
+      - echo "Logging into Docker Hub..."
+      - docker login -u brianremodl -p "${DOCKERHUB_TOKEN}"
       - mkdir -p ./target/dashboard
       - rm -rf ./target/dashboard/*
       - cp -rL ./dashboard/* ./target/dashboard/
@@ -96,6 +97,7 @@ steps:
             - DEBIAN_FRONTEND=noninteractive
             - TZ=Etc/UTC
             - PYO3_PYTHON=python3.12
+            - DOCKERHUB_TOKEN
           mount-buildkite-agent: true
           volumes:
             - /var/run/docker.sock:/var/run/docker.sock
@@ -109,12 +111,12 @@ steps:
       queue: cpu_queue_postmerge
     commands:
       - echo "Building InferX PostgreSQL v${VERSION}"
-      - echo "Logging into Docker Hub..."
-      - docker login -u brianremodl -p "${DOCKERHUB_TOKEN}"
       - echo "Installing Docker CLI..."
       - |
           apt-get update -qq
           apt-get install -y -qq docker.io
+      - echo "Logging into Docker Hub..."
+      - docker login -u brianremodl -p "${DOCKERHUB_TOKEN}"
       - mkdir -p ./target/postgres
       - rm -rf ./target/postgres/*
       - cp ./dashboard/sql/*.sql ./target/postgres/
@@ -134,6 +136,7 @@ steps:
             - DEBIAN_FRONTEND=noninteractive
             - TZ=Etc/UTC
             - PYO3_PYTHON=python3.12
+            - DOCKERHUB_TOKEN
           mount-buildkite-agent: true
           volumes:
             - /var/run/docker.sock:/var/run/docker.sock
