@@ -10,7 +10,7 @@ steps:
       - echo "Building InferX v${VERSION}"
       - echo "Installing system dependencies..."
       - apt-get update -qq
-      - apt-get install -y -qq build-essential pkg-config libssl-dev protobuf-compiler curl
+      - apt-get install -y -qq build-essential pkg-config libssl-dev protobuf-compiler curl docker.io
 
       - echo "Installing Rust..."
       - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
@@ -65,6 +65,9 @@ steps:
       queue: cpu_queue_postmerge
     commands:
       - echo "Building InferX Dashboard v${VERSION}"
+      - echo "Installing Docker CLI..."
+      - apt-get update -qq && apt-get install -y -qq docker.io
+
       - mkdir -p ./target/dashboard
       - rm -rf ./target/dashboard/*
       - cp -rL ./dashboard/* ./target/dashboard/
@@ -97,6 +100,9 @@ steps:
       queue: cpu_queue_postmerge
     commands:
       - echo "Building InferX PostgreSQL v${VERSION}"
+      - echo "Installing Docker CLI..."
+      - apt-get update -qq && apt-get install -y -qq docker.io
+
       - mkdir -p ./target/postgres
       - rm -rf ./target/postgres/*
       - cp ./dashboard/sql/*.sql ./target/postgres/
