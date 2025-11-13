@@ -52,7 +52,7 @@ steps:
       - DOCKERHUB_TOKEN
     plugins:
       - docker#v5.11.0:
-          image: rust:1.83-slim
+          image: rust:nightly-slim
           propagate-environment: true
           mount-buildkite-agent: true
           environment:
