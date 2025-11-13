@@ -44,7 +44,6 @@ use serde_json::Value;
 use tower_http::cors::{Any, CorsLayer};
 
 use axum_server::tls_rustls::RustlsConfig;
-use http_body_util::BodyExt;
 use hyper::body::Bytes;
 use hyper::{StatusCode, Uri};
 
@@ -242,7 +241,7 @@ async fn GetReqs(
     let response = client.watch(tonic::Request::new(req)).await.unwrap();
     let mut ws = response.into_inner();
 
-    let (tx, rx) = mpsc::channel::<SResult<String, Infallible>>(128);
+    let (tx, rx) = mpsc::channel::<SResult<Bytes, Infallible>>(128);
     tokio::spawn(async move {
         loop {
             let event = ws.message().await;
@@ -258,7 +257,8 @@ async fn GetReqs(
                 },
             };
 
-            match tx.send(Ok(req.value.clone())).await {
+            let bytes = Bytes::from(req.value.clone());
+            match tx.send(Ok(bytes)).await {
                 Err(_) => {
                     // error!("PostCall sendbytes fail with channel unexpected closed");
                     return;
@@ -269,11 +269,7 @@ async fn GetReqs(
     });
 
     let stream = tokio_stream::wrappers::ReceiverStream::new(rx);
-    let body: http_body_util::StreamBody<
-        tokio_stream::wrappers::ReceiverStream<SResult<String, Infallible>>,
-    > = http_body_util::StreamBody::new(stream);
-
-    let body = axum::body::Body::from_stream(body);
+    let body = axum::body::Body::from_stream(stream);
 
     return Ok(Response::new(body));
 }
