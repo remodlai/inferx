@@ -1,0 +1,139 @@
+env:
+  VERSION: "${BUILDKITE_BRANCH}"
+
+steps:
+  - label: ":rust: Build InferX Platform & NA Images"
+    key: build-platform-na
+    agents:
+      queue: cpu_queue_postmerge
+    commands:
+      - echo "Building InferX v${VERSION}"
+      - echo "Installing system dependencies..."
+      - apt-get update -qq
+      - apt-get install -y -qq build-essential pkg-config libssl-dev protobuf-compiler curl
+
+      - echo "Installing Rust..."
+      - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+      - source $HOME/.cargo/env
+      - rustc --version
+
+      - echo "Building svc binary (release mode)..."
+      - cargo build --release --bin svc
+
+      - echo "Building ixctl binary..."
+      - cargo build --release --bin ixctl
+
+      - echo "Preparing Docker build context for platform..."
+      - mkdir -p ./target/svc/inferx/config
+      - cp ./target/release/svc ./target/svc/
+      - cp ./target/release/ixctl ./target/svc/
+      - cp ./deployment/svc.Dockerfile ./target/svc/Dockerfile
+      - cp nodeconfig/node*.json ./target/svc/inferx/config/ || echo "No node config files"
+      - cp ./deployment/svc-entrypoint.sh ./target/svc/svc-entrypoint.sh
+      - cp onenode_logging_config.yaml ./target/svc/ || echo "No logging config"
+
+      - echo "Building platform Docker image..."
+      - cd ./target/svc
+      - docker build --network=host --build-arg UBUNTU_VERSION=22.04 -t remodlai/inferx_platform:${VERSION} .
+
+      - echo "Tagging as inferx_na (same image, different name)..."
+      - docker tag remodlai/inferx_platform:${VERSION} remodlai/inferx_na:${VERSION}
+
+      - echo "Logging in to Docker Hub..."
+      - echo "$$(buildkite-agent secret get DOCKER_PASSWORD)" | docker login -u brianremodl --password-stdin
+
+      - echo "Pushing platform image..."
+      - docker push remodlai/inferx_platform:${VERSION}
+
+      - echo "Pushing NA image..."
+      - docker push remodlai/inferx_na:${VERSION}
+
+      - echo "✅ Platform and NA images built and pushed!"
+    secrets:
+      - DOCKER_PASSWORD
+    plugins:
+      - docker#v5.11.0:
+          image: rust:1.75-slim
+          propagate-environment: true
+          mount-buildkite-agent: true
+          volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+
+  - label ":dashboard: Build Dashboard Image"
+    key: build-dashboard
+    agents:
+      queue: cpu_queue_postmerge
+    commands:
+      - echo "Building InferX Dashboard v${VERSION}"
+      - mkdir -p ./target/dashboard
+      - rm -rf ./target/dashboard/*
+      - cp -rL ./dashboard/* ./target/dashboard/
+      - cp ./deployment/dashboard.Dockerfile ./target/dashboard/Dockerfile
+
+      - echo "Building Docker image..."
+      - cd ./target/dashboard
+      - docker build -t remodlai/inferx_dashboard:${VERSION} .
+
+      - echo "Logging in to Docker Hub..."
+      - echo "$$(buildkite-agent secret get DOCKER_PASSWORD)" | docker login -u brianremodl --password-stdin
+
+      - echo "Pushing image..."
+      - docker push remodlai/inferx_dashboard:${VERSION}
+
+      - echo "✅ Dashboard image built and pushed!"
+    secrets:
+      - DOCKER_PASSWORD
+    plugins:
+      - docker#v5.11.0:
+          image: ubuntu:22.04
+          propagate-environment: true
+          mount-buildkite-agent: true
+          volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+
+  - label ":postgres: Build PostgreSQL Image"
+    key: build-postgres
+    agents:
+      queue: cpu_queue_postmerge
+    commands:
+      - echo "Building InferX PostgreSQL v${VERSION}"
+      - mkdir -p ./target/postgres
+      - rm -rf ./target/postgres/*
+      - cp ./dashboard/sql/*.sql ./target/postgres/
+      - cp ./deployment/postgres-entrypoint.sh ./target/postgres/postgres-entrypoint.sh
+      - cp ./deployment/postgres.Dockerfile ./target/postgres/Dockerfile
+
+      - echo "Building Docker image..."
+      - cd ./target/postgres
+      - docker build --network=host -t remodlai/inferx_postgres:${VERSION} .
+
+      - echo "Logging in to Docker Hub..."
+      - echo "$$(buildkite-agent secret get DOCKER_PASSWORD)" | docker login -u brianremodl --password-stdin
+
+      - echo "Pushing image..."
+      - docker push remodlai/inferx_postgres:${VERSION}
+
+      - echo "✅ PostgreSQL image built and pushed!"
+    secrets:
+      - DOCKER_PASSWORD
+    plugins:
+      - docker#v5.11.0:
+          image: ubuntu:22.04
+          propagate-environment: true
+          mount-buildkite-agent: true
+          volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+
+  - wait
+
+  - label ":white_check_mark: Build Complete"
+    command: |
+      echo "✅ All InferX images built successfully for version ${VERSION}!"
+      echo ""
+      echo "Images pushed to Docker Hub:"
+      echo "  - remodlai/inferx_platform:${VERSION}"
+      echo "  - remodlai/inferx_na:${VERSION}"
+      echo "  - remodlai/inferx_dashboard:${VERSION}"
+      echo "  - remodlai/inferx_postgres:${VERSION}"
+      echo ""
+      echo "To deploy on EKS, update the image tags in k8s manifests to ${VERSION}"

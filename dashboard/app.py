@@ -698,12 +698,8 @@ def proxy1(path):
 
 @prefix_bp.route("/intro")
 def md():
-    # name = request.args.get("name")
-    name = 'home.md'
-    md_content = read_markdown_file("doc/"+name)
-    return render_template(
-        "markdown.html", md_content=md_content
-    )
+    # Disabled due to symlink issue - return simple HTML
+    return "<html><body><h1>InferX Dashboard</h1><p>Navigate using the menu above.</p></body></html>"
 
 @prefix_bp.route('/doc/<path:filename>')
 def route_build_files(filename):
