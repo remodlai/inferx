@@ -13,6 +13,12 @@ spec:
       labels:
         app: ixproxy
     spec:
+      nodeSelector:
+        inferx_nodeType: inferx_file
+      tolerations:
+      - key: nvidia.com/gpu
+        operator: Exists
+        effect: NoSchedule
       containers:
         - name: ixproxy
           image: remodlai/inferx_na:pr-34
@@ -57,7 +63,7 @@ spec:
                 containerName: ixproxy
                 resource: limits.hugepages-2Mi   
           - name: CACHE_MEMORY
-            value: "25Gi"
+            value: "10Gi"
           - name: ENABLE_2MB_PAGE
             value: "true"  
           - name: CONTEXT_OVERHEAD
@@ -69,18 +75,18 @@ spec:
               resourceFieldRef:
                 containerName: ixproxy
                 resource: limits.cpu                            
-          - name: ENALBE_BLOB
+          - name: ENABLE_BLOB
             value: "false"                     
           resources:
             requests:
-              cpu: "5"
-              memory: "30Gi"              # Regular memory request (RAM)
-              hugepages-2Mi: "30Gi" 
+              cpu: "2"
+              memory: "10Gi"              # Regular memory request (RAM)
+              hugepages-2Mi: "0"
             limits:
-              cpu: "20"
-              memory: "180Gi"              # Regular memory request (RAM)
-              hugepages-2Mi: "30Gi" 
-              # nvidia.com/gpu: 1
+              cpu: "6"
+              memory: "20Gi"              # Regular memory request (RAM)
+              hugepages-2Mi: "0"
+              nvidia.com/gpu: 1
           volumeMounts:
             - mountPath: /run/udev
               name: run-udev
@@ -136,14 +142,14 @@ spec:
           hostPath:
             path: /opt/inferx/bin
         - name: opt-inferx-cache
-          hostPath:
-            path: /opt/inferx/cache
+          persistentVolumeClaim:
+            claimName: inferx-cache-efs
         - name: opt-inferx-data
           hostPath:
             path: /opt/inferx/data
         - name: opt-inferx-snapshot
-          hostPath:
-            path: /opt/inferx/snapshot
+          persistentVolumeClaim:
+            claimName: inferx-snapshots-efs
         - name: docker-runtime
           hostPath:
             path: /var/run/docker/runtime-runc/moby/

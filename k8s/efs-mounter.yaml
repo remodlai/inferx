@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: efs-mounter
+spec:
+  selector:
+    matchLabels:
+      app: efs-mounter
+  template:
+    metadata:
+      labels:
+        app: efs-mounter
+    spec:
+      nodeSelector:
+        inferx_nodeType: inferx_file
+      tolerations:
+      - key: nvidia.com/gpu
+        operator: Exists
+        effect: NoSchedule
+      hostNetwork: true
+      hostPID: true
+      containers:
+      - name: efs-mounter
+        image: ubuntu:22.04
+        command:
+        - /bin/bash
+        - -c
+        - |
+          apt-get update -qq && apt-get install -y -qq nfs-common
+          mkdir -p /host/opt/inferx/cache /host/opt/inferx/snapshot
+          mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport fs-0063d3b0e8fb308af.efs.us-west-2.amazonaws.com:/ /host/opt/inferx/cache
+          mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport fs-0063d3b0e8fb308af.efs.us-west-2.amazonaws.com:/ /host/opt/inferx/snapshot
+          echo "EFS mounted successfully"
+          sleep infinity
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: host
+          mountPath: /host
+          mountPropagation: Bidirectional
+      volumes:
+      - name: host
+        hostPath:
+          path: /

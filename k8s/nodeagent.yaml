@@ -17,7 +17,7 @@ spec:
         inferx_nodeType: inferx_blob      
       containers:
         - name: nodeagent
-          image: remodlai/inferx_na:pr-34
+          image: inferx/inferx_na:v0.1.5.beta10
           imagePullPolicy: IfNotPresent
           securityContext:
             privileged: true
@@ -109,14 +109,14 @@ spec:
           hostPath:
             path: /opt/inferx/bin
         - name: opt-inferx-cache
-          persistentVolumeClaim:
-            claimName: inferx-cache-efs
+          hostPath:
+            path: /opt/inferx/cache
         - name: opt-inferx-data
           hostPath:
             path: /opt/inferx/data
         - name: opt-inferx-snapshot
-          persistentVolumeClaim:
-            claimName: inferx-snapshots-efs
+          hostPath:
+            path: /opt/inferx/snapshot
         - name: docker-runtime
           hostPath:
             path: /var/run/docker/runtime-runc/moby/
@@ -144,7 +144,11 @@ spec:
         app: nodeagent
     spec:
       nodeSelector:
-        inferx_nodeType: inferx_file      
+        inferx_nodeType: inferx_file
+      tolerations:
+      - key: nvidia.com/gpu
+        operator: Exists
+        effect: NoSchedule
       # initContainers:
       #   - name: wait-for-dependencies
       #     image: busybox
@@ -158,7 +162,7 @@ spec:
       #       ]
       containers:
         - name: nodeagent
-          image: remodlai/inferx_na:pr-34
+          image: inferx/inferx_na:v0.1.5.beta10
           imagePullPolicy: IfNotPresent
           securityContext:
             privileged: true
@@ -169,6 +173,10 @@ spec:
           env:
           - name: STATESVC_ADDR
             value: "http://statesvc:1237"
+          - name: ETCD_ADDR
+            value: "http://etcd:2379"
+          - name: AUDITDB_ADDR
+            value: "postgresql://audit_user:123456@inferx-audit-db.cbcmgsyoow1t.us-west-2.rds.amazonaws.com:5432/auditdb"
           - name: RUN_SERVICE
             value: "NodeAgent"
           - name: ENABLE_COREDUMP
@@ -192,7 +200,7 @@ spec:
                 containerName: nodeagent
                 resource: limits.hugepages-2Mi   
           - name: CACHE_MEMORY
-            value: "30Gi"
+            value: "4Gi"
           - name: ENABLE_2MB_PAGE
             value: "false"  
           - name: CONTEXT_OVERHEAD
@@ -206,13 +214,13 @@ spec:
             value: "false"                     
           resources:
             requests:
-              cpu: "15"
-              memory: "40Gi"              # Regular memory request (RAM)
-              # hugepages-2Mi: "60Gi" 
+              cpu: "1"
+              memory: "6Gi"              # Regular memory request (RAM)
+              # hugepages-2Mi: "60Gi"
             limits:
-              cpu: "20"
-              memory: "100Gi"              # Regular memory request (RAM)
-              # hugepages-2Mi: "60Gi" 
+              cpu: "2"
+              memory: "8Gi"              # Regular memory request (RAM)
+              # hugepages-2Mi: "60Gi"
               # nvidia.com/gpu: 1
           volumeMounts:
             - mountPath: /run/udev
@@ -239,8 +247,6 @@ spec:
               name: opt-inferx-snapshot
             - mountPath: /var/run/docker/runtime-runc/moby/
               name: docker-runtime
-            - mountPath: /home/brad/mnt
-              name: docker-mnt
             - name: dind
               mountPath: /var/lib/docker
             - name: opt-inferx-run
@@ -271,20 +277,17 @@ spec:
           hostPath:
             path: /opt/inferx/bin
         - name: opt-inferx-cache
-          persistentVolumeClaim:
-            claimName: inferx-cache-efs
+          hostPath:
+            path: /opt/inferx/cache
         - name: opt-inferx-data
           hostPath:
             path: /opt/inferx/data
         - name: opt-inferx-snapshot
-          persistentVolumeClaim:
-            claimName: inferx-snapshots-efs
+          hostPath:
+            path: /opt/inferx/snapshot
         - name: docker-runtime
           hostPath:
             path: /var/run/docker/runtime-runc/moby/
-        - name: docker-mnt
-          hostPath:
-            path: /home/brad/mnt
         - name: dind
           hostPath:
             path: /opt/inferx/dind
