@@ -39,7 +39,7 @@ steps:
       - docker tag remodlai/inferx_platform:${VERSION} remodlai/inferx_na:${VERSION}
 
       - echo "Logging in to Docker Hub..."
-      - echo "$$(buildkite-agent secret get DOCKERHUB_TOKEN)" | docker login -u brianremodl --password-stdin
+      - echo "$$DOCKERHUB_TOKEN" | docker login -u brianremodl --password-stdin
 
       - echo "Pushing images..."
       - docker push remodlai/inferx_platform:${VERSION}
@@ -48,6 +48,15 @@ steps:
       - echo "✅ Platform and NA images built!"
     secrets:
       - DOCKERHUB_TOKEN
+    plugins:
+      - docker#v5.11.0:
+          image: ubuntu:22.04
+          propagate-environment: true
+          mount-buildkite-agent: true
+          environment:
+            - DOCKERHUB_TOKEN
+          volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
 
   - label: "Build Dashboard Image"
     key: build-dashboard
