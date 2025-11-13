@@ -47,25 +47,13 @@ steps:
       - echo "Building Docker image..."
       - docker build --build-arg UBUNTU_VERSION=22.04 -f ./target/svc/Dockerfile -t remodlai/inferx_platform:${VERSION} ./target/svc
       - docker tag remodlai/inferx_platform:${VERSION} remodlai/inferx_na:${VERSION}
+      - echo "Logging into Docker Hub..."
+      - buildkite-agent secret get DOCKERHUB_TOKEN | docker login -u brianremodl --password-stdin
       - echo "Pushing images..."
       - docker push remodlai/inferx_platform:${VERSION}
       - docker push remodlai/inferx_na:${VERSION}
 
       - echo "✅ Platform and NA images built!"
-    plugins:
-      - docker#v5.11.0:
-          image: ubuntu:22.04
-          environment:
-            - DEBIAN_FRONTEND=noninteractive
-            - TZ=Etc/UTC
-            - PYO3_PYTHON=python3.12
-            - DOCKERHUB_TOKEN
-          mount-buildkite-agent: true
-          volumes:
-            - /var/run/docker.sock:/var/run/docker.sock
-      - docker-login#v3.0.0:
-          username: brianremodl
-          password-env: DOCKERHUB_TOKEN
 
   - label: "Build Dashboard Image"
     key: build-dashboard
@@ -77,10 +65,6 @@ steps:
       - |
           apt-get update -qq
           apt-get install -y -qq docker.io
-      - echo "Fetching Docker Hub token..."
-      - export DOCKERHUB_TOKEN="$(buildkite-agent secret get DOCKERHUB_TOKEN)"
-      - echo "Logging into Docker Hub..."
-      - docker login -u brianremodl -p "${DOCKERHUB_TOKEN}"
       - mkdir -p ./target/dashboard
       - rm -rf ./target/dashboard/*
       - cp -rL ./dashboard/* ./target/dashboard/
@@ -88,24 +72,12 @@ steps:
 
       - echo "Building Docker image..."
       - docker build -f ./target/dashboard/Dockerfile -t remodlai/inferx_dashboard:${VERSION} ./target/dashboard
+      - echo "Logging into Docker Hub..."
+      - buildkite-agent secret get DOCKERHUB_TOKEN | docker login -u brianremodl --password-stdin
       - echo "Pushing image..."
       - docker push remodlai/inferx_dashboard:${VERSION}
 
       - echo "✅ Dashboard image built and pushed!"
-    plugins:
-      - docker#v5.11.0:
-          image: ubuntu:22.04
-          environment:
-            - DEBIAN_FRONTEND=noninteractive
-            - TZ=Etc/UTC
-            - PYO3_PYTHON=python3.12
-            - DOCKERHUB_TOKEN
-          mount-buildkite-agent: true
-          volumes:
-            - /var/run/docker.sock:/var/run/docker.sock
-      - docker-login#v3.0.0:
-          username: brianremodl
-          password-env: DOCKERHUB_TOKEN
 
   - label: "Build PostgreSQL Image"
     key: build-postgres
@@ -117,10 +89,6 @@ steps:
       - |
           apt-get update -qq
           apt-get install -y -qq docker.io
-      - echo "Fetching Docker Hub token..."
-      - export DOCKERHUB_TOKEN="$(buildkite-agent secret get DOCKERHUB_TOKEN)"
-      - echo "Logging into Docker Hub..."
-      - docker login -u brianremodl -p "${DOCKERHUB_TOKEN}"
       - mkdir -p ./target/postgres
       - rm -rf ./target/postgres/*
       - cp ./dashboard/sql/*.sql ./target/postgres/
@@ -129,24 +97,12 @@ steps:
 
       - echo "Building Docker image..."
       - docker build -f ./target/postgres/Dockerfile -t remodlai/inferx_postgres:${VERSION} ./target/postgres
+      - echo "Logging into Docker Hub..."
+      - buildkite-agent secret get DOCKERHUB_TOKEN | docker login -u brianremodl --password-stdin
       - echo "Pushing image..."
       - docker push remodlai/inferx_postgres:${VERSION}
 
       - echo "✅ PostgreSQL image built and pushed!"
-    plugins:
-      - docker#v5.11.0:
-          image: ubuntu:22.04
-          environment:
-            - DEBIAN_FRONTEND=noninteractive
-            - TZ=Etc/UTC
-            - PYO3_PYTHON=python3.12
-            - DOCKERHUB_TOKEN
-          mount-buildkite-agent: true
-          volumes:
-            - /var/run/docker.sock:/var/run/docker.sock
-      - docker-login#v3.0.0:
-          username: brianremodl
-          password-env: DOCKERHUB_TOKEN
 
   - wait
 
