@@ -1,0 +1,51 @@
+FROM nvidia/cuda:12.8.1-cudnn-runtime-ubuntu22.04
+
+ARG INFERX_RUNTIME_URL=https://github.com/inferx-net/inferx/releases/download/0.1.4/inferx.tar.gz
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        gnupg \
+        iproute2 \
+        iptables \
+        software-properties-common \
+        tzdata && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Docker CLI (required for k3s with --docker runtime)
+RUN install -m 0755 -d /etc/apt/keyrings && \
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
+    chmod a+r /etc/apt/keyrings/docker.gpg && \
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+      $(. /etc/os-release && echo \"$VERSION_CODENAME\") stable" | \
+      tee /etc/apt/sources.list.d/docker.list > /dev/null && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends docker-ce-cli && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install InferX runtime
+RUN curl -fsSL "${INFERX_RUNTIME_URL}" -o /tmp/inferx.tar.gz && \
+    mkdir -p /opt && \
+    tar -xzf /tmp/inferx.tar.gz -C /opt && \
+    rm /tmp/inferx.tar.gz
+
+# Override the bundled entrypoint inside the runtime tree
+COPY deployment/svc-entrypoint.sh /opt/inferx/bin/svc-entrypoint.sh
+RUN chmod +x /opt/inferx/bin/svc-entrypoint.sh
+
+COPY k8s/install-k3s.sh /usr/local/bin/install-k3s.sh
+RUN chmod +x /usr/local/bin/install-k3s.sh
+
+COPY deployment/inferx-agent-entrypoint.sh /usr/local/bin/inferx-agent-entrypoint.sh
+RUN chmod +x /usr/local/bin/inferx-agent-entrypoint.sh
+
+COPY deployment/run-inferx-agent.sh /usr/local/bin/run-inferx-agent.sh
+RUN chmod +x /usr/local/bin/run-inferx-agent.sh
+
+ENV INSTALL_K3S_EXEC="agent --docker" \
+    PATH="/opt/inferx/bin:${PATH}"
+
+ENTRYPOINT ["/usr/local/bin/run-inferx-agent.sh"]

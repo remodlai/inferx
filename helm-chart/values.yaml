@@ -1,0 +1,18 @@
+image:
+  platform: inferx/inferx_platform:v0.1.4
+  postgres: inferx/inferx_postgres:v0.1.4
+  dashboard: inferx/inferx_dashboard:v0.1.4
+
+database:
+  user: audit_user
+  password: "123456"
+  name: auditdb
+
+nodeSelector:
+  gateway: inferx-role=gateway
+  scheduler: inferx-role=scheduler
+  statesvc: inferx-role=statesvc
+  etcd: inferx-role=etcd
+  keycloak: inferx-role=keycloak
+  dashboard: inferx-role=dashboard
+  postgres: inferx-role=postgres
